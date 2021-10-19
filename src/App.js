@@ -1,9 +1,11 @@
 
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import './App.css';
 import Post from './Post';
+import  { db } from './firebase';
 
-function App() {
+
+function App() { 
   const [posts, setPosts] = useState ([
     {
       username: "Oscar",
@@ -16,6 +18,14 @@ function App() {
       imageUrl:"https://ep1.pinkbike.org/p2pb21499691/p2pb21499691.jpg"
     }
   ]);
+
+  useEffect (() =>{
+    db.collection('posts').onSnapshot(snapshot => {
+    //every time a new post is added. this code firebase
+    setPosts(snapshot.docs.map(doc => doc.data()));
+    })
+    
+  }, []);
 
   return (
     <div className="App">
