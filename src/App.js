@@ -5,6 +5,7 @@ import { auth, db } from "./firebase";
 import { makeStyles } from "@mui/styles";
 import Modal from "@mui/material/Modal";
 import { Button, Input } from "@mui/material";
+import ImagenUpload from "./ImagenUpload";
 
 function getModalStyle() {
   const top = 50;
@@ -32,29 +33,28 @@ function App() {
 
   const [posts, setPosts] = useState([]);
   const [open, setOpen] = useState(false);
+  const [openSignIn, setOpenSignIn] = useState (false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
   const [user, setUser] = useState(null);
 
-  useEffect(() =>{
+  useEffect(() => {
     const unsuscribe = auth.onAuthStateChanged((authUser) => {
-      if (authUser){
+      if (authUser) {
         //uses has ogged in...
         console.log(authUser);
         setUser(authUser);
-
-      } else{
+      } else {
         //user has logged ou...
         setUser(null);
       }
-    })
+    });
 
-    return  () => {
+    return () => {
       unsuscribe();
-    }
-  },[user, username]);
-
+    };
+  }, [user, username]);
 
   useEffect(() => {
     //this is where the code runs
@@ -72,33 +72,46 @@ function App() {
   const signUp = (event) => {
     event.preventDefault();
 
-    auth.createUserWithEmailAndPassword(email, password)
-    .then((auth) => {
-      return authUser.user.updateProfile({
-        displayName: username
+    auth
+      .createUserWithEmailAndPassword(email, password)
+      .then((authUser) => {
+        return authUser.user.updateProfile({
+          displayName: username
+        });
       })
-    })
-    .catch((error) => alert(error.message))
+      .catch((error) => alert(error.message));
+
+      setOpen(false);
   };
 
-  return (
-    <div className="App">
+  const signIn = (event) => {
+    event.preventDefault();
 
+    auth
+      .signInWithEmailAndPassword(email, password)
+      .catch((error)  => alert(error.message))
+    
+    setOpenSignIn(false);
+  }
+
+  return (
+    <div className="app">
+      {/* I want to have...*/}
+      {/*Caption input*/}
+      {/*File Picker*/}
+      {/*Post Button*/}
+
+      <ImagenUpload></ImagenUpload>
       <Modal open={open} onClose={() => setOpen(false)}>
         <div style={modalStyle} className={classes.paper}>
           <form className="app__signup">
-            <center className="app__signup">
+            <center classsName="app__signup">
               <img
                 src="https://www.instagram.com/static/images/web/mobile_nav_type_logo.png/735145cfe0a4.png"
                 alt=""
                 className="app__headerImage"
               />
-              <Input
-                type="text"
-                placeholder="Username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-              />
+             
               <Input
                 type="text"
                 placeholder="Email"
@@ -111,13 +124,28 @@ function App() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
-              <Button type="submit" onClick={signUp}>Sign Up</Button>
+              <Button type="submit" onClick={signUp}>Sign In</Button>
             </center>
           </form>
         </div>
       </Modal>
+      <div className="app__header">
+        <img
+          src="https://www.instagram.com/static/images/web/mobile_nav_type_logo.png/735145cfe0a4.png"
+          alt=""
+          className="app__headerImage"
+        />
+      </div>
+      {/* Here are the if else of the sign and logout*/}
+      {user ? (
+        <Button onClick={() => auth.signOut()}>Log out</Button>
+      ): (
+        <div className="app__loginContainer">
+          <Button onClick={() => setOpen(true)}>Sign up</Button>
+        </div>
+        
+      )}
 
-      <Button onClick={() => setOpen(true)}>Sign up</Button>
 
       <h1>Hola</h1>
 
