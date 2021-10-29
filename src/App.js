@@ -12,6 +12,7 @@ function getModalStyle() {
   const left = 50;
 
   return {
+    height: "300px",
     top: `${top}%`,
     left: `${left}%`,
     transform: `tranlated(-${top}%,-${left}%)`,
@@ -22,7 +23,7 @@ const useStyles = makeStyles((theme) => ({
   paper: {
     position: "absolute",
     width: 400,
-
+    height: 200,
     border: "2px solid #000",
   },
 }));
@@ -33,7 +34,7 @@ function App() {
 
   const [posts, setPosts] = useState([]);
   const [open, setOpen] = useState(false);
-  const [openSignIn, setOpenSignIn] = useState (false);
+  const [openSignIn, setOpenSignIn] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
@@ -45,6 +46,14 @@ function App() {
         //uses has ogged in...
         console.log(authUser);
         setUser(authUser);
+
+        if (authUser.displayName){
+          //dont update username
+        }else{
+          return authUser.updateProfile({
+            displayName: username,
+          });
+        }
       } else {
         //user has logged ou...
         setUser(null);
@@ -58,15 +67,17 @@ function App() {
 
   useEffect(() => {
     //this is where the code runs
-    db.collection("posts").onSnapshot((snapshot) => {
-      //every time a new post is added. this code firebase
-      setPosts(
-        snapshot.docs.map((doc) => ({
-          id: doc.id,
-          post: doc.data(),
-        }))
-      );
-    });
+    db.collection("posts")
+      .orderBy("timestamp", "desc")
+      .onSnapshot((snapshot) => {
+        //every time a new post is added. this code firebase
+        setPosts(
+          snapshot.docs.map((doc) => ({
+            id: doc.id,
+            post: doc.data()
+          }))
+        );
+      });
   }, []);
 
   const signUp = (event) => {
@@ -76,12 +87,12 @@ function App() {
       .createUserWithEmailAndPassword(email, password)
       .then((authUser) => {
         return authUser.user.updateProfile({
-          displayName: username
+          displayName: username,
         });
       })
       .catch((error) => alert(error.message));
 
-      setOpen(false);
+    setOpen(false);
   };
 
   const signIn = (event) => {
@@ -89,19 +100,13 @@ function App() {
 
     auth
       .signInWithEmailAndPassword(email, password)
-      .catch((error)  => alert(error.message))
-    
+      .catch((error) => alert(error.message));
+
     setOpenSignIn(false);
-  }
+  };
 
   return (
     <div className="app">
-      {/* I want to have...*/}
-      {/*Caption input*/}
-      {/*File Picker*/}
-      {/*Post Button*/}
-
-      <ImagenUpload></ImagenUpload>
       <Modal open={open} onClose={() => setOpen(false)}>
         <div style={modalStyle} className={classes.paper}>
           <form className="app__signup">
@@ -111,7 +116,7 @@ function App() {
                 alt=""
                 className="app__headerImage"
               />
-             
+
               <Input
                 type="text"
                 placeholder="Email"
@@ -124,7 +129,9 @@ function App() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
-              <Button type="submit" onClick={signUp}>Sign In</Button>
+              <Button type="submit" onClick={signUp}>
+                Sign In
+              </Button>
             </center>
           </form>
         </div>
@@ -139,15 +146,12 @@ function App() {
       {/* Here are the if else of the sign and logout*/}
       {user ? (
         <Button onClick={() => auth.signOut()}>Log out</Button>
-      ): (
+      ) : (
         <div className="app__loginContainer">
           <Button onClick={() => setOpen(true)}>Sign up</Button>
         </div>
-        
       )}
 
-
-      <h1>Hola</h1>
 
       {/*conm el sigueinte codigio se cargn toda la info que existe en la base de datos.*/}
       {posts.map(({ id, post }) => (
@@ -158,6 +162,17 @@ function App() {
           imageUrl={post.imageUrl}
         />
       ))}
+
+      
+      {user?.displayName ? (
+        <div className="app__upload">
+          <ImagenUpload username={user.displayName} />
+        </div>
+      ) : (
+        <center>
+          <h3>Login to upload</h3>
+        </center>
+      )}
     </div>
   );
 }
